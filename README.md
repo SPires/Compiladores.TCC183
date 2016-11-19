@@ -4,7 +4,7 @@ Avaliação prática: implementação do front-end de um compilador
 
 1- Definição
 
-Implementar um programa que recebe como entrada um código em linguagem Lua (http://lua.org) e  retorna  a  traduc~ao  para  um  código  de  três  endereçoos.
+Implementar um programa que recebe como entrada um código em linguagem Lua (http://lua.org) e  retorna  a  tradução  para  um  código  de  três  endereçoos.
 
 2- Implementação
 
