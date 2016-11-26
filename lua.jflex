@@ -46,14 +46,14 @@ Symbol newSym(int tokenId, Object value) {
 letra        	= [A-Za-z]
 digito          = [0-9]
 alfanumerico    = {letra}|{digito}
-underline	    = _
+underline	= _
 identificador   = ({letra}|{underline})({alfanumerico}|{underline})*
 inteiro     	= {digito}+
 real            = {inteiro}\.{inteiro}
 char            = '.'
-comentario      = (--([^\R])*\R)|(--[[([^"]"]|("]"[^"]"]))*]])
+comentario      = (--([^\n])*\n)|(--[[([^"]"]|("]"[^"]"]))*]])
 whitespace      = [ \n\t]
-string			= \"([^\"])*\" | \'([^\'])*\'
+string		= (\"([^\"])*\" )|(\'([^\'])*\')
 
 
 %%
@@ -61,27 +61,27 @@ string			= \"([^\"])*\" | \'([^\'])*\'
  * expressoes regulares e a saida deles
  */
 and             { return newSym(sym.AND); }
-break			{ return newSym(sym.BREAK) ; }
-do				{ return newSym(sym.DO) ; }
+break		{ return newSym(sym.BREAK) ; }
+do		{ return newSym(sym.DO) ; }
 else            { return newSym(sym.ELSE); }
-elseif			{ return newSym(sym.ELSEIF); }
+elseif		{ return newSym(sym.ELSEIF); }
 end             { return newSym(sym.END); }
-false			{ return newSym(sym.FALSE) ; }
-for				{ return newSym(sym.FOR) ; }
-function		{ return newSym(sym.FUNCTION) ; }
+false		{ return newSym(sym.FALSE) ; }
+for		{ return newSym(sym.FOR) ; }
+function	{ return newSym(sym.FUNCTION) ; }
 if              { return newSym(sym.IF); }
-in				{ return newSym(sym.IN) ; }
-local			{ return newSym(sym.LOCAL) ; }
-nil				{ return newSym(sym.NIL) ; }
-not				{ return newSym(sym.NOT) ; }
+in		{ return newSym(sym.IN) ; }
+local		{ return newSym(sym.LOCAL) ; }
+nil		{ return newSym(sym.NIL) ; }
+not		{ return newSym(sym.NOT) ; }
 of              { return newSym(sym.OF); }
 or              { return newSym(sym.OR); }
-repeat			{ return newSym(sym.REPEAT) ; }
-return			{ return newSym(sym.RETURN) ; }
+repeat		{ return newSym(sym.REPEAT) ; }
+return		{ return newSym(sym.RETURN) ; }
 then            { return newSym(sym.THEN); }
-true			{ return newSym(sym.TRUE) ; }
-until			{ return newSym(sym.UNTIL) ; }
-while			{ return newSym(sym.WHILE) ; }
+true		{ return newSym(sym.TRUE) ; }
+until		{ return newSym(sym.UNTIL) ; }
+while		{ return newSym(sym.WHILE) ; }
 "*"             { return newSym(sym.VEZES); }
 "+"             { return newSym(sym.MAIS); }
 "-"             { return newSym(sym.MENOS); }
@@ -103,16 +103,19 @@ while			{ return newSym(sym.WHILE) ; }
 "."             { return newSym(sym.PONTO); }
 ".."            { return newSym(sym.DPONTOS); }
 "..."           { return newSym(sym.TPONTOS); }
-"^"             { return newSym(sym.ELOGICO); }
+"^"             { return newSym(sym.EXPO); }
 "%"             { return newSym(sym.RESTO); }
 "#"             { return newSym(sym.TRALHA); }
+"["		{ return newSym(sym.COLCHEE); }
+"]"		{ return newSym(sym.COLCHED); }
+
 {identificador} { return newSym(sym.IDENT, yytext()); }
 {inteiro}       { return newSym(sym.INT, new Integer(yytext())); }
 {real}          { return newSym(sym.REAL, new Double(yytext())); }
 {char}          { return newSym(sym.CHAR, new Character(yytext().charAt(1))); }
-{string}		{ return newSym(sym.STRING, new String(yytext()) ; }
+{string}	{ return newSym(sym.STRING, new String(yytext()) ; }
 {comentario}    { /* Printando os comentarios*/
                   System.out.println("Comentario: " + yytext()); }
-{whitespace}    { /*  */ }
+{whitespace}	{ /*  */ }
 .               { System.out.println("Illegal char, '" + yytext() +
-                    "' line: " + yyline + ", column: " + yychar); }
+"' line: " + yyline + ", column: " + yychar); }

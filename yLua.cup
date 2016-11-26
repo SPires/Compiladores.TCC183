@@ -1,0 +1,137 @@
+
+import java_cup.runtime.*;
+
+parser code {:
+    // Connect this parser to a scanner!
+    Yylex s;
+    Parser(scanner s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+init with {: s.init(); :};
+scan with {: return s.next_token(); :};
+
+/* Terminals (tokens returned by the scanner). */
+terminal            AND, BREAK, DO, ELSE, ELSEIF, END, FALSE, FOR, FUNCTION, IF, IN,
+					LOCAL, NIL, NOT, OR, REPEAT, RETURN, THEN, TRUE, UNTIL, WHILE, VEZES,
+					MAIS, MENOS, DIVIDE, PVIRG, VIRG, PARENE, PAREND, CHAVEE, CHAVED, IGUAL,
+					IGUALI, MENOR, MAIOR, MENORI, MAIORI, PONTO, PONTOS, TILI, DPONTOS, TPONTOS,
+					EXPO, RESTO, TRALHA, IDENT, INT, REAL, COLCHEE, COLCHED, STRING;
+
+/* Non terminals */
+non terminal		block, chunk, stat, laststat, varlist, explist, functioncall, exp,
+					namelist, funcname, funcbody, var, prefixexp, function, tableconstructor,
+					binop, unop, args, parlist, fieldlist, field, fieldsep;
+
+/* Precedences */
+
+precedence left OR, AND;
+precedence left MENOR, MAIOR, MENORI, MAIORI, TILI, IGUALI;
+precedence left MAIS, MENOS;
+precedence left VEZES, DIVIDE, RESTO;
+precedence left NOT, TRALHA, MENOS;
+precedence right EXPO, DPONTOS;
+
+/* The grammar rules */
+chunk ::= CHAVEE stat CHAVED         {: :}
+		| CHAVEE stat PVIRG CHAVED         {: :}
+		| CHAVEE stat CHAVED laststat         {: :}
+		| CHAVEE stat PVIRG CHAVED laststat        {: :}
+		| CHAVEE stat PVIRG CHAVED laststat PVIRG        {: :}
+		;
+block ::= chunk						{: :};
+stat ::= varlist IGUAL explist		{: :}
+		| functioncall				{: :}
+		| DO block END				{: :}
+		| WHILE exp DO block END	{: :}
+		| REPEAT block UNTIL exp	{: :}
+		| IF exp THEN block CHAVEE ELSEIF exp THEN block CHAVED END	{: :}
+		| IF exp THEN block CHAVEE ELSEIF exp THEN block CHAVED ELSE block END	{: :}
+		| FOR IDENT IGUAL exp VIRG exp DO block END		{: :}
+		| FOR IDENT IGUAL exp VIRG exp VIRG exp DO block END		{: :}
+		| FOR namelist IN explist DO block END		{: :}
+		| FUNCTION funcname funcbody		{: :}
+		| LOCAL FUNCTION IDENT funcbody		{: :}
+		| LOCAL namelist					{: :}
+		| LOCAL namelist IGUAL explist		{: :}
+		;
+laststat ::= RETURN 				{: :}
+		| RETURN explist			{: :}
+		| BREAK						{: :}
+		;
+funcname ::= IDENT CHAVEE PONTO IDENT CHAVED	{: :}
+		| IDENT CHAVEE PONTO IDENT CHAVED PONTOS IDENT	{: :}
+		;
+varlist ::= var CHAVEE VIRG var CHAVED		{: :};
+var ::= IDENT								{: :}
+		| prefixexp COLCHEE exp COLCHEE		{: :}
+		| prefixexp PONTO IDENT				{: :}
+		;
+namelist ::= IDENT CHAVEE VIRG IDENT CHAVED	{: :};
+explist ::= CHAVEE exp VIRG CHAVED exp		{: :};
+exp ::= NIL									{: :}
+		| FALSE								{: :}
+		| TRUE								{: :}
+		| REAL								{: :}
+		| INT								{: :}
+		| STRING							{: :}
+		| TPONTOS							{: :}
+		| function							{: :}
+		| prefixexp							{: :}
+		| tableconstructor					{: :}
+		| exp binop exp						{: :}
+		| unop exp							{: :}
+		;
+prefixexp ::= var 							{: :}
+		| functioncall						{: :}
+		| PARENE exp PAREND					{: :}
+		;
+functioncall ::= prefixexp args				{: :}
+		| prefixexp PONTOS IDENT args		{: :}
+		;
+args ::= PARENE explist PAREND				{: :}
+		| PARENE PAREND						{: :}
+		| tableconstructor 					{: :}
+		| STRING							{: :}
+		;
+function ::= FUNCTION funcbody 				{: :};
+funcbody ::= PARENE parlist PAREND block END {: :}
+		| PARENE PAREND block END			{: :}
+		;
+parlist ::= namelist VIRG TPONTOS			{: :}
+		|	namelist						{: :}
+		| TPONTOS							{: :}
+		;
+tableconstructor ::= CHAVEE fieldlist CHAVED {: :}
+		| CHAVEE CHAVED						{: :}
+		;
+fieldlist ::= field CHAVEE fieldsep field CHAVED fieldsep {: :}
+		| field CHAVEE fieldsep field CHAVED {: :}
+		;
+field ::= COLCHEE exp COLCHED IGUAL exp 	{: :}
+		| IDENT IGUAL exp					{: :}
+		| exp								{: :}
+		;
+fieldsep ::= VIRG							{: :}
+		| PVIRG								{: :}
+		;
+binop ::= MAIS							{: :}
+		| MENOS	{: :}
+		| VEZES		{: :}
+		| DIVIDE	{: :}
+		| EXPO		{: :}
+		| RESTO		{: :}
+		| DPONTOS	{: :}
+		| MENOR		{: :}
+		| MENORI	{: :}
+		| MAIOR	{: :}
+		| MAIORI {: :}
+		| IGUALI {: :}
+		| TILI	{: :}
+		| AND {: :}
+		| OR	{: :}
+		;
+unop ::= MENOS {: :}
+		| NOT {: :}
+		| TRALHA	{: :}
+		;
