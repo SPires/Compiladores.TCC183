@@ -1,15 +1,14 @@
 
 import java_cup.runtime.*;
+import java.io.*;
 
 parser code {:
     // Connect this parser to a scanner!
-    Yylex s;
-    Parser(scanner s){ this.s=s; }
+    public static void main (String args[]) throws Exception{
+		new Parser(new Yylex(new java.io.FileReader("exemplo.lua"))).parse();
+	}
 :}
 
-/* define how to connect to the scanner! */
-init with {: s.init(); :};
-scan with {: return s.next_token(); :};
 
 /* Terminals (tokens returned by the scanner). */
 terminal            AND, BREAK, DO, ELSE, ELSEIF, END, FALSE, FOR, FUNCTION, IF, IN,
@@ -19,9 +18,9 @@ terminal            AND, BREAK, DO, ELSE, ELSEIF, END, FALSE, FOR, FUNCTION, IF,
 					EXPO, RESTO, TRALHA, IDENT, INT, REAL, COLCHEE, COLCHED, STRING;
 
 /* Non terminals */
-non terminal		block, chunk, stat, laststat, varlist, explist, functioncall, exp,
-					namelist, funcname, funcbody, var, prefixexp, function, tableconstructor,
-					binop, unop, args, parlist, fieldlist, field, fieldsep;
+non terminal		block, chunk, chunk2, stat, laststat, varlist, varlist2, explist, explist2, functioncall, exp,
+					namelist, namelist2, funcname, funcname2, funcbody, var, function, tableconstructor,
+					binop, unop, args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio;
 
 /* Precedences */
 
@@ -30,23 +29,26 @@ precedence left MENOR, MAIOR, MENORI, MAIORI, TILI, IGUALI;
 precedence left MAIS, MENOS;
 precedence left VEZES, DIVIDE, RESTO;
 precedence left NOT, TRALHA, MENOS;
-precedence right EXPO, DPONTOS;
+precedence right EXPO, DPONTOS, PARENE, PAREND,CHAVEE, CHAVED, COLCHED, VIRG, IDENT, END;
 
 /* The grammar rules */
-chunk ::= CHAVEE stat CHAVED         {: :}
-		| CHAVEE stat PVIRG CHAVED         {: :}
-		| CHAVEE stat CHAVED laststat         {: :}
-		| CHAVEE stat PVIRG CHAVED laststat        {: :}
-		| CHAVEE stat PVIRG CHAVED laststat PVIRG        {: :}
+chunk ::= chunk2 laststat        {:  :}
+		| chunk2 laststat PVIRG   {: :}
+		| chunk2 {::}
+		;
+chunk2 ::= chunk2 stat  {::}
+		| chunk2 stat PVIRG {::}
+		| {::}
 		;
 block ::= chunk						{: :};
 stat ::= varlist IGUAL explist		{: :}
 		| functioncall				{: :}
+		%prec PARENE
 		| DO block END				{: :}
 		| WHILE exp DO block END	{: :}
 		| REPEAT block UNTIL exp	{: :}
-		| IF exp THEN block CHAVEE ELSEIF exp THEN block CHAVED END	{: :}
-		| IF exp THEN block CHAVEE ELSEIF exp THEN block CHAVED ELSE block END	{: :}
+		| IF exp THEN block ifeio END	{: :}
+		| IF exp THEN block ifeio ELSE block END	{: :}
 		| FOR IDENT IGUAL exp VIRG exp DO block END		{: :}
 		| FOR IDENT IGUAL exp VIRG exp VIRG exp DO block END		{: :}
 		| FOR namelist IN explist DO block END		{: :}
@@ -55,20 +57,40 @@ stat ::= varlist IGUAL explist		{: :}
 		| LOCAL namelist					{: :}
 		| LOCAL namelist IGUAL explist		{: :}
 		;
+ifeio ::= ifeio ELSEIF exp THEN block {: :}
+		| {::}
+		;
 laststat ::= RETURN 				{: :}
 		| RETURN explist			{: :}
 		| BREAK						{: :}
 		;
-funcname ::= IDENT CHAVEE PONTO IDENT CHAVED	{: :}
-		| IDENT CHAVEE PONTO IDENT CHAVED PONTOS IDENT	{: :}
+funcname ::= IDENT funcname2 {: :}
+		| IDENT  funcname2  PONTOS IDENT	{: :}
 		;
-varlist ::= var CHAVEE VIRG var CHAVED		{: :};
+funcname2 ::= funcname2	PONTO IDENT {: :}
+		| {::}
+		;
+varlist ::= var varlist2 {: :};
+varlist2 ::= varlist2 VIRG var  {: :}
+	| {::}
+	;
 var ::= IDENT								{: :}
-		| prefixexp COLCHEE exp COLCHEE		{: :}
-		| prefixexp PONTO IDENT				{: :}
+		| var COLCHEE exp COLCHEE		{: :}
+		| var PONTO IDENT				{: :}
+		| functioncall COLCHEE exp COLCHEE		{: :}
+		| functioncall PONTO IDENT				{: :}
+		| PARENE exp PAREND COLCHEE exp COLCHEE		{: :}
+		| PARENE exp PAREND PONTO IDENT				{: :}
 		;
-namelist ::= IDENT CHAVEE VIRG IDENT CHAVED	{: :};
-explist ::= CHAVEE exp VIRG CHAVED exp		{: :};
+namelist ::= IDENT namelist2	{: :};
+namelist2 ::= namelist2 VIRG IDENT {: :}
+	%prec VIRG
+	| {::}
+	;
+explist ::= explist2 exp		{: :};
+explist2 ::= explist2 VIRG exp {::}
+		| {::}
+		;
 exp ::= NIL									{: :}
 		| FALSE								{: :}
 		| TRUE								{: :}
@@ -77,17 +99,26 @@ exp ::= NIL									{: :}
 		| STRING							{: :}
 		| TPONTOS							{: :}
 		| function							{: :}
-		| prefixexp							{: :}
+		| var 							{: :}
+		%prec CHAVEE
+		| functioncall						{: :}
+		%prec CHAVEE
+		| PARENE exp PAREND					{: :}
 		| tableconstructor					{: :}
 		| exp binop exp						{: :}
 		| unop exp							{: :}
 		;
-prefixexp ::= var 							{: :}
-		| functioncall						{: :}
-		| PARENE exp PAREND					{: :}
-		;
-functioncall ::= prefixexp args				{: :}
-		| prefixexp PONTOS IDENT args		{: :}
+
+functioncall ::= var args				{: :}
+		%prec CHAVEE
+		| var PONTOS IDENT args		{: :}
+		| functioncall args				{: :}
+		%prec CHAVEE
+		| functioncall PONTOS IDENT args		{: :}
+		| PARENE exp PAREND args				{: :}
+		%prec CHAVEE
+		| PARENE exp PAREND PONTOS IDENT args		{: :}
+		%prec CHAVEE
 		;
 args ::= PARENE explist PAREND				{: :}
 		| PARENE PAREND						{: :}
@@ -105,8 +136,11 @@ parlist ::= namelist VIRG TPONTOS			{: :}
 tableconstructor ::= CHAVEE fieldlist CHAVED {: :}
 		| CHAVEE CHAVED						{: :}
 		;
-fieldlist ::= field CHAVEE fieldsep field CHAVED fieldsep {: :}
-		| field CHAVEE fieldsep field CHAVED {: :}
+fieldlist ::= field fieldlist2 fieldsep {: :}
+		| field fieldlist2 {: :}
+		;
+fieldlist2 ::= fieldlist2 fieldsep field 	{: :}
+		| {: :}
 		;
 field ::= COLCHEE exp COLCHED IGUAL exp 	{: :}
 		| IDENT IGUAL exp					{: :}

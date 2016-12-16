@@ -17,7 +17,6 @@ import java_cup.runtime.*;
 %line
 %column
 %unicode
-%class LuaLexer
 
 /*
 * Essa parte entre %{ e %} sera inserida exatamente como está no arquivo .java final
@@ -50,7 +49,6 @@ underline	= _
 identificador   = ({letra}|{underline})({alfanumerico}|{underline})*
 inteiro     	= {digito}+
 real            = {inteiro}\.{inteiro}
-char            = '.'
 comentario      = (--([^\n])*\n)|(--[[([^"]"]|("]"[^"]"]))*]])
 whitespace      = [ \n\t]
 string		= (\"([^\"])*\" )|(\'([^\'])*\')
@@ -74,7 +72,6 @@ in		{ return newSym(sym.IN) ; }
 local		{ return newSym(sym.LOCAL) ; }
 nil		{ return newSym(sym.NIL) ; }
 not		{ return newSym(sym.NOT) ; }
-of              { return newSym(sym.OF); }
 or              { return newSym(sym.OR); }
 repeat		{ return newSym(sym.REPEAT) ; }
 return		{ return newSym(sym.RETURN) ; }
@@ -112,8 +109,7 @@ while		{ return newSym(sym.WHILE) ; }
 {identificador} { return newSym(sym.IDENT, yytext()); }
 {inteiro}       { return newSym(sym.INT, new Integer(yytext())); }
 {real}          { return newSym(sym.REAL, new Double(yytext())); }
-{char}          { return newSym(sym.CHAR, new Character(yytext().charAt(1))); }
-{string}	{ return newSym(sym.STRING, new String(yytext()) ; }
+{string}	{ return newSym(sym.STRING, new String(yytext())) ; }
 {comentario}    { /* Printando os comentarios*/
                   System.out.println("Comentario: " + yytext()); }
 {whitespace}	{ /*  */ }
