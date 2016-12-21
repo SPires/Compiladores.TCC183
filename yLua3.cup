@@ -13,11 +13,10 @@ parser code {:
 		Parser fdp = new Parser(new Yylex(new java.io.FileReader("exe10.lua")));
 		No nRaiz = (No) fdp.parse().value;
 		System.out.println(out);
-		String textoQueSeraEscrito = "Texto que sera escrito.";
 		FileWriter arquivo;
 		try {
 			arquivo = new FileWriter(new File("Arquivo.txt"));
-			arquivo.write(textoQueSeraEscrito);
+			arquivo.write(nRaiz.toString());
 			arquivo.close();
 		} catch (IOException e) {
 			e.printStackTrace();
