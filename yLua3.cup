@@ -34,6 +34,7 @@ parser code {:
 				arvParser.close();
 			if (codInter != null)
 				codInter.close();
+		}
 	}
 :}
 
