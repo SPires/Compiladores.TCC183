@@ -146,6 +146,63 @@ stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
 														No.novoFilho(aux, e);
 														RESULT =  aux;
 														System.out.println("repbluntexp->stt"); :}
+		| FOR IDENT IGUAL exp:e1 VIRG exp:e2 DO block:bl END		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, "id");
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, e1);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e2);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao(e.getExpressao()+"::label"+auxCounter+"::\n"+
+																			"if not("+e.getValor()+") then goto fim"+
+																			auxCounter+"\n"+b.getExpressao()+"goto label"+
+																			auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("forid=exp,expdoblend->stt"); :}
+		| FOR IDENT:i IGUAL exp:e1 VIRG exp:e2 VIRG exp:e3 DO block:bl END		{:  aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, "id");
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, e1);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e2);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e3);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao("aux"+auxCounter+"="+e1.getValor()+"\n"+"aux"+auxCounter+1+"="+e2.getValor()+"\n"+
+																"aux"+auxCounter+2+"="+e3.getValor()+"\n"+"aux"+auxCounter+3+"= "+auxCounter+
+																" and "+auxCounter+2+"\n aux"+auxCounter+4+"= aux"+auxCounter+2+" and aux"+auxCounter+
+																3+"\n if not("+auxCounter+4+") then goto fim"+auxCounter+"\n aux"+auxCounter+" = "+
+																auxCounter+" - aux"+auxCounter+2+"\n ::label"+auxCounter+"::\n aux"+auxCounter+
+																"= aux"+auxCounter+" + aux"+auxCounter+2+"\n aux"+auxCounter+5+" = aux"+auxCounter+2+
+																" >= 0 \n aux"+auxCounter+6+"= aux"+auxCounter+" > aux"+auxCounter+1+"\n aux"+
+																auxCounter+7+"= aux"+auxCounter+5+" and aux"+auxCounter+6+"\n aux"+auxCounter+8+
+																"= aux"+auxCounter+2+" < 0 \n aux"+auxCounter+9+"= aux"+auxCounter+" < aux"+
+																auxCounter+1+"\n aux"+auxCounter+10+"= aux"+auxCounter+9+" and aux"+auxCounter+8+
+																"\n aux"+auxCounter+11+"= aux"+auxCounter+7+" or aux"+auxCounter+10+"\n if aux"+
+																auxCounter11+"then goto fim"+auxCounter+"\n local "+i+"= aux"+auxCounter+
+																"\n"+bl.getExpressao()+"\n goto label"+auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("forid=exp,exp,expdoblend->stt"); :}
+		| FOR namelist:nl IN explist:el DO block:bl END		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, nl);
+														No.novoFilho(aux, "in");
+														No.novoFilho(aux, el);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao(e.getExpressao()+"::label"+auxCounter+"::\n"+
+																			"if not("+e.getValor()+") then goto fim"+
+																			auxCounter+"\n"+b.getExpressao()+"goto label"+
+																			auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("fornlinexldoblend->stt"); :}
 		;
 var ::= IDENT:n							{: aux = new No(null, "var");
 											No.novoFilho(aux, "id:"+n);
