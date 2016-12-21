@@ -51,7 +51,7 @@ terminal String 	 IDENT, STRING;
 /* Non terminals */
 non terminal	No	block, chunk, chunk2, stat, laststat, varlist, explist, functioncall, exp,
 					namelist, funcname, funcname2, funcbody, var, function, tableconstructor,
-					unop, args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio, factor;
+					args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio, factor;
 
 /* Precedences */
 
@@ -904,6 +904,24 @@ exp ::= factor:f 							{: aux = new No(null, "exp");
 												aux.setEnds(2);
 												RESULT =  aux;
 												:}
+		| MENOS exp:e						{: aux = new No(null, "exp");
+												No.novoFilho(aux, "-");
+												No.novoFilho(aux, e);
+												aux.setExpressao(e.getExpressao());
+												aux.setValor("-"+e.getValor());
+												RESULT =  aux; :}
+		| NOT exp:e						{: aux = new No(null, "exp");
+												No.novoFilho(aux, "not");
+												No.novoFilho(aux, e);
+												aux.setExpressao(e.getExpressao());
+												aux.setValor("not "+e.getValor());
+												RESULT =  aux; :}
+		| TRALHA exp:e						{: aux = new No(null, "exp");
+												No.novoFilho(aux, "#");
+												No.novoFilho(aux, e);
+												aux.setExpressao(e.getExpressao());
+												aux.setValor("#"+e.getValor());
+												RESULT =  aux; :}
 		;
 functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, v);
@@ -1126,3 +1144,4 @@ factor ::= NIL									{: aux = new No(null, "factor");
 												RESULT =  aux;
 												:}
 		;
+		
