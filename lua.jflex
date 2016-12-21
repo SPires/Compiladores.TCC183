@@ -52,11 +52,14 @@ identificador   = ({letra}|{underline})({alfanumerico}|{underline})*
 inteiro     	= {digito}+
 real            = {inteiro}\.{inteiro}
 comentario      = "-""-"
+comentariob		= "-""-""[""["
 branco	= \s
 string		= (\"([^\"])*\" )|(\'([^\'])*\')
 notcoment = .+
+notcomentb = (([^"]"])+|("]"[^"]"])+)
+fimcomentb = "]""]"
 
-%state COMMENT
+%state COMMENT, COMMENTB
 
 %%
 /**
@@ -117,8 +120,13 @@ while		{ return newSym(sym.WHILE) ; }
 {real}          { return newSym(sym.REAL, new Double(yytext())); }
 {string}	{ return newSym(sym.STRING, new String(yytext())) ; }
 {comentario}	{ yybegin(COMMENT);}
+{comentariob}	{ yybegin(COMMENTB);}
 }
 <COMMENT>{
 {novalinha}	{yybegin(YYINITIAL);}
 {notcoment}	{}
+}
+<COMMENTB>{
+{notcomentb}	{}
+{fimcomentb}	{yybegin(YYINITIAL);}
 }
