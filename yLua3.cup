@@ -281,7 +281,7 @@ stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
 														No.novoFilho(aux, "function");
 														No.novoFilho(aux, fn);
 														No.novoFilho(aux, fb);
-														aux.setExpressao("function"+fn.getValor()+fb.getValor());
+														aux.setExpressao("function "+fn.getValor()+fb.getValor());
 														RESULT =  aux;
 														:}
 		| LOCAL FUNCTION IDENT:id funcbody:fb		{: aux = new No(null, "stat");
