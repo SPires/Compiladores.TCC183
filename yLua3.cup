@@ -2,6 +2,7 @@
 import java_cup.runtime.*;
 import java.io.*;
 import codigo.No;
+import java.util.Scanner;
 
 parser code {:
     // Connect this parser to a scanner!
