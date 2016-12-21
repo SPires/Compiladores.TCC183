@@ -11,11 +11,19 @@ parser code {:
 	private static String out = "";
     public static void main (String args[]) throws Exception{
 		Parser fdp = new Parser(new Yylex(new java.io.FileReader("exe10.lua")));
-		No nRaiz = fdp.parse();
+		No nRaiz = (No) fdp.parse().value;
 		System.out.println(out);
-		FileWriter arqArvore = new FileWriter("arvParse.txt");
-		PrintWriter gravador1 = new PrintWriter(arqArvore);
-		gravador1.printf("%s",nRaiz.toString());
+		String textoQueSeraEscrito = "Texto que sera escrito.";
+		FileWriter arquivo;
+		try {
+			arquivo = new FileWriter(new File("Arquivo.txt"));
+			arquivo.write(textoQueSeraEscrito);
+			arquivo.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 :}
 
