@@ -10,7 +10,8 @@ parser code {:
 	private No aux = null;
 	private static String out = "";
     public static void main (String args[]) throws Exception{
-		No nRaiz = new Parser(new Yylex(new java.io.FileReader("exe10.lua"))).parse();
+		Parser fdp = new Parser(new Yylex(new java.io.FileReader("exe10.lua")));
+		No nRaiz = fdp.parse();
 		System.out.println(out);
 		FileWriter arqArvore = new FileWriter("arvParse.txt");
 		PrintWriter gravador1 = new PrintWriter(arqArvore);
