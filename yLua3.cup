@@ -10,21 +10,29 @@ parser code {:
 	private No aux = null;
 	private static String out = "";
     public static void main (String args[]) throws Exception{
-		Parser fdp = new Parser(new Yylex(new java.io.FileReader("exe10.lua")));
+    		System.out.println("Insira o nome do arquivo de entrada: ");
+		Scanner entrada = new Scanner(System.in);
+		String nome = entrada.nextLine();
+		Parser fdp = new Parser(new Yylex(new java.io.FileReader(nome)));
 		No nRaiz = (No) fdp.parse().value;
 		System.out.println(out);
 		FileWriter arvParse, codInter;
+		avrParser = null;
+		codInter = null;
 		try {
 			arq1 = new FileWriter(new File("ArvoreParser.txt"));
 			arq1.write(nRaiz.toString());
-			arq1.close();
 			arq2 = new FileWriter(new File("CodigoInter.txt"));
-			arq2.write(nRaiz.toString());
-			arq2.close();
+			arq2.write(nRaiz.getExpressao());
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if (arvParser != null)
+				arvParser.close();
+			if (codInter != null)
+				codInter.close();
 		}
 	}
 :}
