@@ -16,14 +16,14 @@ parser code {:
 		Parser fdp = new Parser(new Yylex(new java.io.FileReader(nome)));
 		No nRaiz = (No) fdp.parse().value;
 		System.out.println(out);
-		FileWriter arvParse, codInter;
-		avrParser = null;
+		FileWriter arvParser, codInter;
+		arvParser = null;
 		codInter = null;
 		try {
-			arq1 = new FileWriter(new File("ArvoreParser.txt"));
-			arq1.write(nRaiz.toString());
-			arq2 = new FileWriter(new File("CodigoInter.txt"));
-			arq2.write(nRaiz.getExpressao());
+			arvParser = new FileWriter(new File("ArvoreParser.txt"));
+			arvParser.write(nRaiz.toString());
+			codInter = new FileWriter(new File("CodigoInter.txt"));
+			codInter.write(nRaiz.getExpressao());
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -33,7 +33,6 @@ parser code {:
 				arvParser.close();
 			if (codInter != null)
 				codInter.close();
-		}
 	}
 :}
 
