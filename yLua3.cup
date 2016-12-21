@@ -13,11 +13,14 @@ parser code {:
 		Parser fdp = new Parser(new Yylex(new java.io.FileReader("exe10.lua")));
 		No nRaiz = (No) fdp.parse().value;
 		System.out.println(out);
-		FileWriter arquivo;
+		FileWriter arvParse, codInter;
 		try {
-			arquivo = new FileWriter(new File("Arquivo.txt"));
-			arquivo.write(nRaiz.toString());
-			arquivo.close();
+			arq1 = new FileWriter(new File("ArvoreParser.txt"));
+			arq1.write(nRaiz.toString());
+			arq1.close();
+			arq2 = new FileWriter(new File("CodigoInter.txt"));
+			arq2.write(nRaiz.toString());
+			arq2.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
