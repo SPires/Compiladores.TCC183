@@ -1,0 +1,405 @@
+
+import java_cup.runtime.*;
+import java.io.*;
+import codigo.No;
+
+parser code {:
+    // Connect this parser to a scanner!
+	private int auxCounter = 0;
+	private No raiz = new No(null);
+	private No aux = null;
+	private static String out = "";
+    public static void main (String args[]) throws Exception{
+		new Parser(new Yylex(new java.io.FileReader("exe10.lua"))).parse();
+		System.out.println(out);
+	}
+:}
+
+
+/* Terminals (tokens returned by the scanner). */
+terminal            AND, BREAK, DO, ELSE, ELSEIF, END, FALSE, FOR, FUNCTION, IF, IN,
+					LOCAL, NIL, NOT, OR, REPEAT, RETURN, THEN, TRUE, UNTIL, WHILE, VEZES,
+					MAIS, MENOS, DIVIDE, PVIRG, VIRG, PARENE, PAREND, CHAVEE, CHAVED, IGUAL,
+					IGUALI, MENOR, MAIOR, MENORI, MAIORI, PONTO, PONTOS, TILI, DPONTOS, TPONTOS,
+					EXPO, RESTO, TRALHA, COLCHEE, COLCHED;
+terminal Integer 	INT;
+terminal Float		REAL;
+terminal String 	 IDENT, STRING;
+
+/* Non terminals */
+non terminal	No	block, chunk, chunk2, stat, laststat, varlist, varlist2, explist, functioncall, exp,
+					namelist, funcname, funcname2, funcbody, var, function, tableconstructor,
+					binop, unop, args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio, factor;
+
+/* Precedences */
+
+precedence left OR, AND;
+precedence left MENOR, MAIOR, MENORI, MAIORI, TILI, IGUALI;
+precedence left MAIS, MENOS;
+precedence left VEZES, DIVIDE, RESTO;
+precedence left STRING, INT, REAL;
+precedence left END, IDENT, NOT, TRALHA, MENOS;
+
+
+/* The grammar rules */
+chunk ::=	chunk2:ch2 {: aux = new No(null, "chunk");
+									No.novoFilho(aux, ch2);
+									System.out.println(aux);
+									aux.setValor(ch2.getValor());
+									aux.setExpressao(ch2.getExpressao());
+									System.out.println(aux.getExpressao());
+									System.out.println(aux.getValor());
+									RESULT =  aux;
+									System.out.println("ch2->ch"); :} 
+		|chunk2:ch2 laststat:lststt       {: aux = new No(null, "chunk");
+									No.novoFilho(aux, ch2);
+									No.novoFilho(aux, lststt);
+									System.out.println(aux);
+									aux.setExpressao(ch2.getExpressao()+lststt.getExpressao()+ lststt.getValor());
+									RESULT =  aux;
+									System.out.println("ch2lststt->ch"); :}
+		| chunk2:ch2 laststat:lst PVIRG   {: aux = new No(null, "chunk");
+									No.novoFilho(aux, ch2);
+									No.novoFilho(aux, lst);
+									No.novoFilho(aux, ";");
+									System.out.println(aux);
+									aux.setExpressao(ch2.getExpressao()+lst.getExpressao()+ lst.getValor());
+									RESULT =  aux;
+									System.out.println("ch2lststt;->ch"); :}
+		| laststat:lststt       {: aux = new No(null, "chunk");
+									No.novoFilho(aux, lststt);
+									System.out.println(aux);
+									aux.setExpressao(lststt.getExpressao()+lststt.getValor());
+									RESULT =  aux;
+									System.out.println("lststt->ch"); :}
+		| laststat:lst PVIRG   {: aux = new No(null, "chunk");
+									No.novoFilho(aux, lst);
+									No.novoFilho(aux, ";");
+									System.out.println(aux);
+									aux.setExpressao(lst.getExpressao()+lst.getValor());
+									RESULT =  aux;
+									System.out.println("lst;->ch"); :}
+		| {: aux = new No(null, "chunk");
+					RESULT =  aux;
+					System.out.println("vazio->ch"); :}
+		;
+chunk2 ::= chunk2:ch2 stat:stt  {:aux = new No(null, "chunk2");
+					No.novoFilho(aux, ch2);
+					No.novoFilho(aux, stt);
+					aux.setExpressao(ch2.getExpressao() + stt.getExpressao()+ stt.getValor());
+					RESULT =  aux;
+					System.out.println("ch2stt->ch2");:}
+		| chunk2:ch2 stat:stt PVIRG {: aux = new No(null, "chunk2");
+					No.novoFilho(aux, ch2);
+					No.novoFilho(aux, stt);
+					No.novoFilho(aux, ";");
+					aux.setExpressao(ch2.getExpressao() + stt.getExpressao()+ stt.getValor());
+					RESULT =  aux;
+					System.out.println("ch2stt;->ch2"); :}
+		| stat:stt  {:aux = new No(null, "chunk2");
+					No.novoFilho(aux, stt);
+					aux.setExpressao(stt.getExpressao()+stt.getValor());
+					RESULT =  aux;
+					System.out.println("stt->ch2");:}
+		| stat:stt PVIRG {: aux = new No(null, "chunk2");
+					No.novoFilho(aux, stt);
+					No.novoFilho(aux, ";");
+					aux.setExpressao(stt.getExpressao()+stt.getValor());
+					RESULT =  aux;
+					System.out.println("stt;->ch2"); :}
+		;
+block ::= chunk:ch						{: aux = new No(null, "block");
+					No.novoFilho(aux, ch);
+					aux.setValor(ch.getValor());
+					RESULT =  aux;
+					System.out.println("ch->bl"); :};
+stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
+														No.novoFilho(aux, v);
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, el);
+														aux.setExpressao(v.getExpressao()+el.getExpressao()+v.getValor()+" = "+ el.getValor()+"\n");
+														System.out.println(aux.getExpressao()+aux.getValor());
+														RESULT =  aux;
+														System.out.println("var=exl->stt"); :}
+		| DO block:bl END				{:  aux = new No(null, "stat");
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao("do\n"+bl.getExpressao()+"end\n");
+														RESULT =  aux; System.out.println("doblend->stt"); :}
+		| WHILE exp:e DO block:b END	{: aux = new No(null, "stat");
+														No.novoFilho(aux, "while");
+														No.novoFilho(aux, e);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, b);
+														No.novoFilho(aux, "end");
+														aux.setExpressao(e.getExpressao()+"::label"+auxCounter+"::\n"+
+																			"if not("+e.getValor()+") then goto fim"+
+																			auxCounter+"\n"+b.getExpressao()+"goto label"+
+																			auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("whiexpdoblend->stt"); :}
+		| REPEAT block:b UNTIL exp:e	{: aux = new No(null, "stat");
+														No.novoFilho(aux, "repeat");
+														No.novoFilho(aux, b);
+														No.novoFilho(aux, "until");
+														No.novoFilho(aux, e);
+														RESULT =  aux;
+														System.out.println("repbluntexp->stt"); :}
+		| FOR IDENT:i IGUAL exp:e1 VIRG exp:e2 DO block:bl END		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, "id");
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, e1);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e2);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao("aux"+auxCounter+"="+e1.getValor()+"\n"+"aux"+auxCounter+1+"="+e2.getValor()+"\n"+
+																"aux"+auxCounter+2+"= 1 \n"+"aux"+auxCounter+3+"= "+auxCounter+
+																" and "+auxCounter+2+"\n aux"+auxCounter+4+"= aux"+auxCounter+2+" and aux"+auxCounter+
+																3+"\n if not("+auxCounter+4+") then goto fim"+auxCounter+"\n aux"+auxCounter+" = "+
+																auxCounter+" - aux"+auxCounter+2+"\n ::label"+auxCounter+"::\n aux"+auxCounter+
+																"= aux"+auxCounter+" + aux"+auxCounter+2+"\n aux"+auxCounter+5+" = aux"+auxCounter+2+
+																" >= 0 \n aux"+auxCounter+6+"= aux"+auxCounter+" > aux"+auxCounter+1+"\n aux"+
+																auxCounter+7+"= aux"+auxCounter+5+" and aux"+auxCounter+6+"\n aux"+auxCounter+8+
+																"= aux"+auxCounter+2+" < 0 \n aux"+auxCounter+9+"= aux"+auxCounter+" < aux"+
+																auxCounter+1+"\n aux"+auxCounter+10+"= aux"+auxCounter+9+" and aux"+auxCounter+8+
+																"\n aux"+auxCounter+11+"= aux"+auxCounter+7+" or aux"+auxCounter+10+"\n if aux"+
+																auxCounter+11+"then goto fim"+auxCounter+"\n local "+i+"= aux"+auxCounter+
+																"\n"+bl.getExpressao()+"\n goto label"+auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("forid=exp,expdoblend->stt"); :}
+		| FOR IDENT:i IGUAL exp:e1 VIRG exp:e2 VIRG exp:e3 DO block:bl END		{:  aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, "id");
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, e1);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e2);
+														No.novoFilho(aux, ",");
+														No.novoFilho(aux, e3);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														aux.setExpressao("aux"+auxCounter+"="+e1.getValor()+"\n"+"aux"+auxCounter+1+"="+e2.getValor()+"\n"+
+																"aux"+auxCounter+2+"="+e3.getValor()+"\n"+"aux"+auxCounter+3+"= "+auxCounter+
+																" and "+auxCounter+2+"\n aux"+auxCounter+4+"= aux"+auxCounter+2+" and aux"+auxCounter+
+																3+"\n if not("+auxCounter+4+") then goto fim"+auxCounter+"\n aux"+auxCounter+" = "+
+																auxCounter+" - aux"+auxCounter+2+"\n ::label"+auxCounter+"::\n aux"+auxCounter+
+																"= aux"+auxCounter+" + aux"+auxCounter+2+"\n aux"+auxCounter+5+" = aux"+auxCounter+2+
+																" >= 0 \n aux"+auxCounter+6+"= aux"+auxCounter+" > aux"+auxCounter+1+"\n aux"+
+																auxCounter+7+"= aux"+auxCounter+5+" and aux"+auxCounter+6+"\n aux"+auxCounter+8+
+																"= aux"+auxCounter+2+" < 0 \n aux"+auxCounter+9+"= aux"+auxCounter+" < aux"+
+																auxCounter+1+"\n aux"+auxCounter+10+"= aux"+auxCounter+9+" and aux"+auxCounter+8+
+																"\n aux"+auxCounter+11+"= aux"+auxCounter+7+" or aux"+auxCounter+10+"\n if aux"+
+																auxCounter+11+"then goto fim"+auxCounter+"\n local "+i+"= aux"+auxCounter+
+																"\n"+bl.getExpressao()+"\n goto label"+auxCounter+"\n::fim"+auxCounter+"::\n");
+														RESULT =  aux;
+														System.out.println("forid=exp,exp,expdoblend->stt"); :}
+		| FOR namelist:nl IN explist:el DO block:bl END		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "for");
+														No.novoFilho(aux, nl);
+														No.novoFilho(aux, "in");
+														No.novoFilho(aux, el);
+														No.novoFilho(aux, "do");
+														No.novoFilho(aux, bl);
+														No.novoFilho(aux, "end");
+														RESULT =  aux;
+														System.out.println("fornlinexldoblend->stt"); :}
+		;
+var ::= IDENT:n							{: aux = new No(null, "var");
+											No.novoFilho(aux, "id:"+n);
+											aux.setValor(n);
+											RESULT =  aux;
+											System.out.println("id->var"); :};
+varlist ::= varlist:vl2 VIRG var:v  {: aux = new No(null, "varlist");
+												No.novoFilho(aux, vl2);
+												No.novoFilho(aux, v);
+												RESULT =  aux;
+												System.out.println("vl,var->vl"); :}
+		|var:v  					{: aux = new No(null, "varlist");
+										No.novoFilho(aux, v);
+										aux.setExpressao(v.getExpressao());
+										aux.setValor(v.getValor());
+										aux.setEnds(v.getEnds());
+										RESULT =  aux;
+										System.out.println("vl->vl"); :};
+explist ::= explist:el VIRG exp:e		{: 	aux = new No(null, "explist");
+										No.novoFilho(aux, el);										
+										No.novoFilho(aux, ",");
+										No.novoFilho(aux, e);
+										aux.setExpressao(el.getExpressao()+e.getExpressao());
+										aux.setValor(el.getValor()+", "+e.getValor());
+										aux.setEnds(e.getEnds()+el.getEnds());
+										System.out.println(aux.getExpressao()+aux.getValor());
+										RESULT =  aux;
+										System.out.println("exlexp->exl");  :}
+		|	exp:e		{: 	aux = new No(null, "explist");
+										No.novoFilho(aux, e);
+										aux.setExpressao(e.getExpressao());
+										aux.setValor(e.getValor());
+										aux.setEnds(e.getEnds());
+										RESULT =  aux;
+										System.out.println("exp->exl");  :}
+		;
+exp ::= factor:f 							{: aux = new No(null, "exp");
+												No.novoFilho(aux, f);
+												aux.setValor(f.getValor());
+												aux.setEnds(1);
+												RESULT =  aux;
+												System.out.println("factor->exp"); :}
+		| var:v 							{: aux = new No(null, "exp");
+												No.novoFilho(aux, v);
+												aux.setExpressao(v.getExpressao());
+												aux.setValor(v.getValor());
+												aux.setEnds(1);
+												RESULT =  aux;
+												System.out.println("var->exp"); :}
+		| PARENE exp:e PAREND					{: aux = new No(null, "exp");
+												No.novoFilho(aux, "(");
+												No.novoFilho(aux, e);
+												No.novoFilho(aux, ")");
+												aux.setEnds(e.getEnds());
+												aux.setValor("("+e.getValor()+")");
+												RESULT =  aux;
+												System.out.println("(exp)->exp"); :}
+		| exp:e1 binop:bin exp:f			{: aux = new No(null, "exp");
+												No.novoFilho(aux, e1);
+												No.novoFilho(aux, bin);
+												No.novoFilho(aux, f);
+												String holder = "";
+												if(e1.getEnds()>1){
+													aux.setExpressao(e1.getExpressao()+"aux"+auxCounter+" = "+e1.getValor()+"\n");
+													aux.setValor("aux"+auxCounter+" "+bin.getValor()+" ");
+													auxCounter++;
+												}else{
+													aux.setValor(e1.getValor()+" "+bin.getValor()+" ");												
+												}
+												if(f.getEnds()>1){
+													aux.setExpressao(aux.getExpressao()+f.getExpressao()+"aux"+auxCounter+" = "+f.getValor()+"\n");
+													aux.setValor(aux.getValor()+"aux"+auxCounter);
+													auxCounter++;
+												}else{
+													aux.setValor(aux.getValor()+f.getValor());												
+												}
+												aux.setEnds(2);
+												System.out.println(aux.getExpressao()+aux.getValor());
+												RESULT =  aux;
+												System.out.println("expbinopfactor->exp"); :}
+		%prec MAIS
+		;
+binop ::= MAIS		{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"+");
+						aux.setValor("+");
+						RESULT =  aux;
+						System.out.println("+->binop"); :}
+		| MENOS	{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"-");
+						aux.setValor("-");
+						RESULT =  aux;
+						System.out.println("-->binop"); :}
+		| VEZES	{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"*");
+						aux.setValor("*");
+						RESULT =  aux;
+						System.out.println("*->binop"); :}
+		| DIVIDE		{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"/");
+						aux.setValor("/");
+						RESULT =  aux;
+						System.out.println("/->binop"); :} 
+		|EXPO		{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"^");
+						aux.setValor("^");
+						RESULT =  aux;
+						System.out.println("^->binop"); :}
+		| RESTO		{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"%");
+						aux.setValor("%");
+						RESULT =  aux;
+						System.out.println("%->binop"); :}
+		| DPONTOS	{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"..");
+						aux.setValor("%");
+						RESULT =  aux;
+						System.out.println("..->binop"); :}
+		| MENOR		{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"<");
+						aux.setValor("<");
+						RESULT =  aux;
+						System.out.println("<->binop"); :}
+		| MENORI	{: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"<=");
+						aux.setValor("<=");
+						RESULT =  aux;
+						System.out.println("<=->binop"); :}
+		| MAIOR	{: 		aux = new No(null, "binop");
+						No.novoFilho(aux,">");
+						aux.setValor(">");
+						RESULT =  aux;
+						System.out.println(">->binop"); :}
+		| MAIORI {: 	aux = new No(null, "binop");
+						No.novoFilho(aux,">=");
+						aux.setValor(">=");
+						RESULT =  aux;
+						System.out.println(">=->binop"); :}
+		| IGUALI {: 	aux = new No(null, "binop");
+						No.novoFilho(aux,"==");
+						aux.setValor("==");
+						RESULT =  aux;
+						System.out.println("==->binop"); :}
+		| TILI	{:		aux = new No(null, "binop");
+						No.novoFilho(aux,"~=");
+						aux.setValor("~=");
+						RESULT =  aux;
+						System.out.println("~=->binop"); :}
+		| AND {: 		aux = new No(null, "binop");
+						No.novoFilho(aux,"and");
+						aux.setValor("and");
+						RESULT =  aux;
+						System.out.println("AND->binop"); :}
+		| OR	{: 		aux = new No(null, "binop");
+						No.novoFilho(aux,"or");
+						aux.setValor("or");
+						RESULT =  aux;
+						System.out.println("OR->binop"); :}
+		;
+factor ::= NIL									{: aux = new No(null, "factor");
+												No.novoFilho(aux, "nil");
+												aux.setValor("nil");
+												aux.setEnds(1);
+												RESULT =  aux;
+												System.out.println("nil->factor");  :}
+		| FALSE								{:	aux = new No(null, "factor");
+												No.novoFilho(aux, "false");
+												aux.setValor("false");
+												aux.setEnds(1);
+												RESULT =  aux;
+												System.out.println("false->factor");  :}
+		| TRUE								{: aux = new No(null, "factor");
+												No.novoFilho(aux, "true");
+												aux.setEnds(1);
+												aux.setValor("true");
+												RESULT =  aux;
+												System.out.println("true->factor");  :}
+		| REAL:n								{: aux = new No(null, "factor");
+												No.novoFilho(aux, "real");
+												aux.setEnds(1);
+												aux.setValor(""+n);
+												RESULT =  aux;
+												System.out.println(""+n+"->factor");  :}
+		| INT:n								{: aux = new No(null, "factor");
+												No.novoFilho(aux, "int");
+												aux.setEnds(1);
+												aux.setValor(""+n);
+												RESULT =  aux;
+												System.out.println(""+n+"->factor");  :}
+		| STRING:n							{: aux = new No(null, "factor");
+												No.novoFilho(aux, "str");
+												aux.setEnds(1);
+												aux.setValor(n);
+												RESULT =  aux;
+												System.out.println(""+n+"->factor");  :}
+		;
