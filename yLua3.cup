@@ -1,8 +1,7 @@
-
+import java.util.*;
 import java_cup.runtime.*;
 import java.io.*;
 import codigo.No;
-import java.util.Scanner;
 
 parser code {:
     // Connect this parser to a scanner!
@@ -12,7 +11,7 @@ parser code {:
 	private static String out = "";
     public static void main (String args[]) throws Exception{
     		System.out.println("Insira o nome do arquivo de entrada: ");
-		Scanner entrada = new Scanner(System.in);
+		java.util.Scanner entrada = new java.util.Scanner(System.in);
 		String nome = entrada.nextLine();
 		Parser fdp = new Parser(new Yylex(new java.io.FileReader(nome)));
 		No nRaiz = (No) fdp.parse().value;
@@ -50,9 +49,9 @@ terminal Float		REAL;
 terminal String 	 IDENT, STRING;
 
 /* Non terminals */
-non terminal	No	block, chunk, chunk2, stat, laststat, varlist, varlist2, explist, functioncall, exp,
+non terminal	No	block, chunk, chunk2, stat, laststat, varlist, explist, functioncall, exp,
 					namelist, funcname, funcname2, funcbody, var, function, tableconstructor,
-					binop, unop, args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio, factor;
+					unop, args, parlist, fieldlist, fieldlist2, field, fieldsep, ifeio, factor;
 
 /* Precedences */
 
@@ -147,6 +146,7 @@ stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
 														System.out.println("var=exl->stt"); :}
 		| functioncall:fc				{:  aux = new No(null, "stat");
 														No.novoFilho(aux, fc);
+														aux.setExpressao(fc.getExpressao()+fc.getValor()+"\n");
 														RESULT =  aux;
 														System.out.println("fcal->stt"); :}
 		| DO block:bl END				{:  aux = new No(null, "stat");
@@ -229,18 +229,14 @@ stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
 																"\n"+bl.getExpressao()+"\n goto label"+auxCounter+"\n::fim"+auxCounter+"::\n");
 														RESULT =  aux;
 														System.out.println("forid=exp,exp,expdoblend->stt"); :}
-		| FOR namelist:nl IN explist:e DO block:bl END		{: aux = new No(null, "stat");
+		| FOR namelist:nl IN explist:el DO block:bl END		{: aux = new No(null, "stat");
 														No.novoFilho(aux, "for");
 														No.novoFilho(aux, nl);
 														No.novoFilho(aux, "in");
-														No.novoFilho(aux, e);
+														No.novoFilho(aux, el);
 														No.novoFilho(aux, "do");
 														No.novoFilho(aux, bl);
 														No.novoFilho(aux, "end");
-														aux.setExpressao(e.getExpressao()+"::label"+auxCounter+"::\n"+
-																			"if not("+e.getValor()+") then goto fim"+
-																			auxCounter+"\n"+bl.getExpressao()+"goto label"+
-																			auxCounter+"\n::fim"+auxCounter+"::\n");
 														RESULT =  aux;
 														System.out.println("fornlinexldoblend->stt"); :}
 		| IF exp:e THEN block:bl ifeio:i END	{: aux = new No(null, "stat");
@@ -289,6 +285,35 @@ stat ::= varlist:v IGUAL explist:el		{:  aux = new No(null, "stat");
 																			"else\n"+bl2.getExpressao()+"end\n");
 														RESULT =  aux;
 														System.out.println("ifexpthenblelseblend->stt"); :}
+		| FUNCTION funcname:fn funcbody:fb		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "function");
+														No.novoFilho(aux, fn);
+														No.novoFilho(aux, fb);
+														aux.setExpressao("function"+fn.getValor()+fb.getValor());
+														RESULT =  aux;
+														System.out.println("funfuncnfuncb->stt"); :}
+		| LOCAL FUNCTION IDENT:id funcbody:fb		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "local");
+														No.novoFilho(aux, "function");
+														No.novoFilho(aux, "id");
+														No.novoFilho(aux, fb);
+														aux.setExpressao("function"+id+fb.getValor());
+														RESULT =  aux;
+														System.out.println("localfunidfuncb->stt"); :}
+		| LOCAL namelist:nl					{: aux = new No(null, "stat");
+														No.novoFilho(aux, "local");
+														No.novoFilho(aux, nl);
+														aux.setExpressao(nl.getExpressao()+"local "+nl.getValor()+"\n");
+														RESULT =  aux;
+														System.out.println("localnl->stt"); :}
+		| LOCAL namelist:nl IGUAL explist:el		{: aux = new No(null, "stat");
+														No.novoFilho(aux, "local");
+														No.novoFilho(aux, nl);
+														No.novoFilho(aux, "=");
+														No.novoFilho(aux, el);
+														aux.setExpressao(nl.getExpressao()+el.getExpressao()+"local "+nl.getValor()+" = "+el.getValor());
+														RESULT =  aux;
+														System.out.println("localnl=exl->stt"); :}
 		;
 ifeio ::= ifeio:i ELSEIF exp:e THEN block:bl {: aux = new No(null, "ifeio");
 												No.novoFilho(aux, i);
@@ -310,11 +335,163 @@ ifeio ::= ifeio:i ELSEIF exp:e THEN block:bl {: aux = new No(null, "ifeio");
 												RESULT =  aux;
 												System.out.println("elseifexpthenbl->ifeio"); :}
 		;
+laststat ::= RETURN 				{: aux = new No(null, "laststat");
+											No.novoFilho(aux, "return");
+											aux.setExpressao("return\n");
+											RESULT =  aux;
+											System.out.println("return->lststt"); :}
+		| RETURN explist:el			{: aux = new No(null, "laststat");
+											No.novoFilho(aux, "return");
+											No.novoFilho(aux, el);
+											aux.setExpressao(el.getExpressao()+"return "+el.getValor()+"\n");
+											RESULT =  aux;
+											System.out.println("retexl->lststt");:}
+		| BREAK						{: aux = new No(null, "laststat");
+										No.novoFilho(aux, "break");
+										aux.setExpressao("break\n");
+										RESULT =  aux;
+										System.out.println("break->lststt");:}
+		;
+funcname ::= funcname2:fn2 IDENT:id  {: aux = new No(null, "funcname");
+											No.novoFilho(aux, fn2);
+											No.novoFilho(aux, "id");
+											aux.setValor(fn2.getValor()+id);
+											RESULT =  aux;
+											System.out.println("fn2id->fn"); :}
+		|   funcname2:fn2 IDENT:id PONTOS IDENT:id2	{: aux = new No(null, "funcname");
+											No.novoFilho(aux, fn2);
+											No.novoFilho(aux, "id");
+											No.novoFilho(aux, ":");
+											No.novoFilho(aux, "id");
+											aux.setValor(fn2.getValor()+id+":"+id2);
+											RESULT =  aux;
+											System.out.println("fn2id:id->fn"); :}
+		|	 IDENT:id  {: aux = new No(null, "funcname");
+											No.novoFilho(aux, "id");
+											aux.setValor(id);
+											RESULT =  aux;
+											System.out.println("fn2id->fn"); :}
+		|   IDENT:id PONTOS IDENT:id2	{: aux = new No(null, "funcname");
+											No.novoFilho(aux, "id");
+											No.novoFilho(aux, ":");
+											No.novoFilho(aux, "id");
+											aux.setValor(id+":"+id2);
+											RESULT =  aux;
+											System.out.println("fn2id:id->fn"); :}
+		;
+funcname2 ::= funcname2:fn2	IDENT:id PONTO  {: aux = new No(null, "funcname2");
+											No.novoFilho(aux, fn2);
+											No.novoFilho(aux, "id");
+											No.novoFilho(aux, ".");
+											aux.setValor(fn2.getValor()+id+".");
+											RESULT =  aux;
+										System.out.println("fn2id.->fn2"); :}
+		| IDENT:id PONTO  {: aux = new No(null, "funcname2");
+											No.novoFilho(aux, "id");
+											No.novoFilho(aux, ".");
+											aux.setValor(id+".");
+											RESULT =  aux;
+										System.out.println("fn2id.->fn2"); :}
+		;
+funcbody ::= PARENE parlist:pl PAREND block:bl END {: aux = new No(null, "funcbody");
+												No.novoFilho(aux, "(");
+												No.novoFilho(aux, pl);
+												No.novoFilho(aux, ")");
+												No.novoFilho(aux, bl);
+												No.novoFilho(aux, "end");
+												aux.setValor("("+pl.getValor()+")\n"+bl.getExpressao()+"end\n");
+												RESULT =  aux;
+												System.out.println("(pl)blend->funcb"); :}
+		| PARENE PAREND block:bl END	{: 	aux = new No(null, "funcbody");
+										No.novoFilho(aux, "(");
+										No.novoFilho(aux, ")");
+										No.novoFilho(aux, bl);
+										No.novoFilho(aux, "end");
+										aux.setValor("()\n"+bl.getExpressao()+"end\n");
+										RESULT =  aux;
+										System.out.println("()blend->funcb"); :}
+		;
+parlist ::= namelist:nl VIRG TPONTOS	{:	aux = new No(null, "parlist");
+											No.novoFilho(aux, nl);
+											No.novoFilho(aux, ",");
+											No.novoFilho(aux, "...");
+											aux.setValor(nl.getValor()+", ...");
+											RESULT =  aux;
+											System.out.println("nl,...->pl"); :}
+		| namelist:nl						{: 	aux = new No(null, "parlist");
+											No.novoFilho(aux, nl);
+											aux.setValor(nl.getValor());
+											RESULT =  aux;
+											System.out.println("nl->pl"); :}
+		| TPONTOS						{: 	aux = new No(null, "parlist");
+											No.novoFilho(aux, "...");
+											aux.setValor("...");
+											RESULT =  aux;
+											System.out.println("...->pl"); :}
+		;
 var ::= IDENT:n							{: aux = new No(null, "var");
 											No.novoFilho(aux, "id:"+n);
 											aux.setValor(n);
 											RESULT =  aux;
-											System.out.println("id->var"); :};
+											System.out.println("id->var"); :}
+		| var:v COLCHEE exp:e COLCHED		{: aux = new No(null, "var");
+												No.novoFilho(aux, v);
+												No.novoFilho(aux, "[");
+												No.novoFilho(aux, e);
+												No.novoFilho(aux, "]");
+												aux.setExpressao(v.getExpressao()+e.getExpressao());
+												aux.setValor(v.getValor()+"["+e.getValor()+"]");
+												RESULT =  aux;
+												System.out.println("var[exp]->var"); :}
+		| var:v PONTO IDENT:id				{: aux = new No(null, "var");
+												No.novoFilho(aux, v);
+												No.novoFilho(aux, ".");
+												No.novoFilho(aux, "id");
+												aux.setExpressao(v.getExpressao());
+												aux.setValor(v.getValor()+"."+id);
+												RESULT =  aux;
+												System.out.println("var.id->var"); :}
+		| functioncall:fc COLCHEE exp:e COLCHED		{: aux = new No(null, "var");
+												No.novoFilho(aux, fc);
+												No.novoFilho(aux, "[");
+												No.novoFilho(aux, e);
+												No.novoFilho(aux, "]");
+												aux.setExpressao(fc.getExpressao()+e.getExpressao());
+												aux.setValor(fc.getValor()+"["+e.getValor()+"]");
+												aux.setEnds(fc.getEnds()+e.getEnds());
+												RESULT =  aux;
+												System.out.println("fcal[exp]->var"); :}
+		| functioncall:fc PONTO IDENT:id				{: aux = new No(null, "var");
+												No.novoFilho(aux, fc);
+												No.novoFilho(aux, ".");
+												No.novoFilho(aux, "id");
+												aux.setExpressao(fc.getExpressao());
+												aux.setValor(fc.getValor()+"."+id);
+												aux.setEnds(fc.getEnds()+1);
+												RESULT =  aux;
+												System.out.println("fcal.id->var"); :}
+		| PARENE exp:e1 PAREND COLCHEE exp:e2 COLCHED		{: aux = new No(null, "var");
+												No.novoFilho(aux, "(");
+												No.novoFilho(aux, e1);
+												No.novoFilho(aux, ")");
+												No.novoFilho(aux, "[");
+												No.novoFilho(aux, e2);
+												No.novoFilho(aux, "]");
+												aux.setExpressao(e1.getExpressao()+e2.getExpressao());
+												aux.setValor("("+e1.getValor()+")["+e2.getValor()+"]");
+												RESULT =  aux;
+												System.out.println("(exp)[exp]->var"); :}
+		| PARENE exp:e1 PAREND PONTO IDENT:id				{: aux = new No(null, "var");
+												No.novoFilho(aux, "(");
+												No.novoFilho(aux, e1);
+												No.novoFilho(aux, ")");
+												No.novoFilho(aux, ".");
+												No.novoFilho(aux, "id");
+												aux.setExpressao(e1.getExpressao());
+												aux.setValor("("+e1.getValor()+")."+id);
+												RESULT =  aux;
+												System.out.println("(exp).id->var"); :}
+		;
 varlist ::= varlist:vl2 VIRG var:v  {: aux = new No(null, "varlist");
 												No.novoFilho(aux, vl2);
 												No.novoFilho(aux, v);
@@ -329,6 +506,19 @@ varlist ::= varlist:vl2 VIRG var:v  {: aux = new No(null, "varlist");
 										aux.setEnds(v.getEnds());
 										RESULT =  aux;
 										System.out.println("vl->vl"); :};
+namelist ::= namelist:nl VIRG IDENT:id	{: aux = new No(null, "namelist");
+										No.novoFilho(aux, nl);
+										No.novoFilho(aux, ",");
+										No.novoFilho(aux, "id");
+										aux.setValor(nl.getValor()+", "+id);
+										RESULT =  aux;
+										System.out.println("idnl->nl"); :}
+		|IDENT:id  {: 	aux = new No(null, "namelist");
+										No.novoFilho(aux, "id");
+										aux.setValor(id);
+										RESULT =  aux;
+										System.out.println("id,->nl"); :}
+		;
 explist ::= explist:el VIRG exp:e		{: 	aux = new No(null, "explist");
 										No.novoFilho(aux, el);										
 										No.novoFilho(aux, ",");
@@ -347,6 +537,11 @@ explist ::= explist:el VIRG exp:e		{: 	aux = new No(null, "explist");
 										RESULT =  aux;
 										System.out.println("exp->exl");  :}
 		;
+function ::= FUNCTION funcbody:fb 	{:	aux = new No(null, "<function>");
+										No.novoFilho(aux, fb);
+										aux.setValor("function "+fb.getValor());
+										RESULT =  aux;
+										System.out.println("functionfuncb->function"); :};
 exp ::= factor:f 							{: aux = new No(null, "exp");
 												No.novoFilho(aux, f);
 												aux.setValor(f.getValor());
@@ -372,9 +567,16 @@ exp ::= factor:f 							{: aux = new No(null, "exp");
 												No.novoFilho(aux, fc);
 												aux.setExpressao(fc.getExpressao());
 												aux.setValor(fc.getValor());
-												aux.setEnds(1);
+												aux.setEnds(1+fc.getEnds());
 												RESULT =  aux;
 												System.out.println("fcal->exp"); :}
+		| function:fun							{: aux = new No(null, "exp");
+												No.novoFilho(aux, fun);
+												aux.setEnds(1);
+												aux.setExpressao("aux"+auxCounter+" = "+fun.getValor()+"\n");
+												aux.setValor("aux"+auxCounter);
+												RESULT =  aux;
+												System.out.println("function->exp"); :}
 		| tableconstructor:tc					{: aux = new No(null, "exp");
 												No.novoFilho(aux, tc);
 												aux.setEnds(1);
@@ -732,13 +934,15 @@ functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, ar);
 												aux.setExpressao(v.getExpressao()+ar.getExpressao());
 												aux.setValor(v.getValor()+ar.getValor());
+												aux.setEnds(v.getEnds()+ar.getEnds());
 												RESULT =  aux;
-												System.out.println("varargs->fcall");  :}
+												System.out.println("varargs->fcall"+ar.getEnds()+aux.getEnds());  :}
 		| var:v PONTOS IDENT:id args:ar		{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, v);
 												No.novoFilho(aux, ":");
 												No.novoFilho(aux, "id");
 												No.novoFilho(aux, ar);
+												aux.setEnds(v.getEnds()+ar.getEnds()+1);
 												aux.setExpressao(v.getExpressao()+ar.getExpressao());
 												aux.setValor(v.getValor()+":"+id+ar.getValor());
 												RESULT =  aux;
@@ -746,6 +950,7 @@ functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 		| functioncall:fc args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, fc);
 												No.novoFilho(aux, ar);
+												aux.setEnds(fc.getEnds()+ar.getEnds());
 												aux.setExpressao(fc.getExpressao()+ar.getExpressao());
 												aux.setValor(fc.getValor()+ar.getValor());
 												RESULT =  aux;
@@ -755,6 +960,7 @@ functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, ":");
 												No.novoFilho(aux, "id");
 												No.novoFilho(aux, ar);
+												aux.setEnds(fc.getEnds()+ar.getEnds()+1);
 												aux.setExpressao(fc.getExpressao()+ar.getExpressao());
 												aux.setValor(fc.getValor()+":"+id+ar.getValor());
 												RESULT =  aux;
@@ -764,6 +970,7 @@ functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, e);
 												No.novoFilho(aux, ")");
 												No.novoFilho(aux, ar);
+												aux.setEnds(e.getEnds()+ar.getEnds());
 												aux.setExpressao(e.getExpressao()+ar.getExpressao());
 												aux.setValor("("+e.getValor()+")"+ar.getValor());
 												RESULT =  aux;
@@ -775,6 +982,7 @@ functioncall ::= var:v args:ar				{: aux = new No(null, "functioncall");
 												No.novoFilho(aux, ":");
 												No.novoFilho(aux, "id");
 												No.novoFilho(aux, ar);
+												aux.setEnds(e.getEnds()+ar.getEnds()+1);
 												aux.setExpressao(e.getExpressao()+ar.getExpressao());
 												aux.setValor("("+e.getValor()+"):"+id+ar.getValor());
 												RESULT =  aux;
@@ -786,6 +994,7 @@ args ::= PARENE explist:el PAREND				{:	aux = new No(null, "args");
 												No.novoFilho(aux, ")");
 												aux.setExpressao(el.getExpressao());
 												aux.setValor("("+el.getValor()+")");
+												aux.setEnds(el.getEnds());
 												RESULT =  aux;
 												System.out.println("(exl)->args"); :}
 		| PARENE PAREND						{: 	aux = new No(null, "args");
@@ -798,11 +1007,13 @@ args ::= PARENE explist:el PAREND				{:	aux = new No(null, "args");
 												No.novoFilho(aux, tc);
 												aux.setExpressao(tc.getExpressao());
 												aux.setValor(tc.getValor());
+												aux.setEnds(1);
 												RESULT =  aux;
 												System.out.println("tabc->args"); :}
 		| STRING:s							{: 	aux = new No(null, "args");
 												No.novoFilho(aux, "string");
 												aux.setValor(s);
+												aux.setEnds(1);
 												RESULT =  aux;
 												System.out.println("string->args");:}
 		;
@@ -873,7 +1084,7 @@ field ::= COLCHEE exp:e1 COLCHED IGUAL exp:e2 	{:	aux = new No(null, "field");
 													No.novoFilho(aux,"=");
 													No.novoFilho(aux, e2);
 													aux.setExpressao(e1.getExpressao()+e2.getExpressao());
-													aux.setValor("["+e1.getValor()+"] = "+e2.getValor()+"\n");
+													aux.setValor("["+e1.getValor()+"] = "+e2.getValor());
 													RESULT =  aux;
 													System.out.println("[exp]=exp->field"); :}
 		| IDENT:id IGUAL exp:e		{:	aux = new No(null, "field");
@@ -881,7 +1092,7 @@ field ::= COLCHEE exp:e1 COLCHED IGUAL exp:e2 	{:	aux = new No(null, "field");
 										No.novoFilho(aux, "=");
 										No.novoFilho(aux, e);
 										aux.setExpressao(e.getExpressao());
-										aux.setValor(id+" = "+e.getValor()+"\n");
+										aux.setValor(id+" = "+e.getValor());
 										RESULT =  aux;
 										System.out.println("id=exp->field"); :}
 		| exp:e		{:	aux = new No(null, "field");
