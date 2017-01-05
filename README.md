@@ -20,5 +20,7 @@ A entrega do trabalho constará de:
 - apresentação do trabalho.
 
 A entrega e agendamento da apresentação devem ser feitos por email até o dia 21/12/2016.
+
 A apresentação deve ser feita até o dia 04/01/2017.
+
 Resultado da Avaliação: 8.0
